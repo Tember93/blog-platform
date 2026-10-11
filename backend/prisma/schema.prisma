@@ -1,0 +1,66 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  username     String    @db.VarChar(50) @unique
+  email        String    @db.VarChar(100) @unique
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  avatarUrl    String?   @map("avatar_url") @db.VarChar(255)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  articles     Article[]
+  comments     Comment[]
+  @@map("user")
+}
+
+model Article {
+  id        Int           @id @default(autoincrement())
+  title     String        @db.VarChar(200)
+  content   String        @db.Text
+  authorId  Int           @map("author_id")
+  status    ArticleStatus @default(DRAFT)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  author    User          @relation(fields: [authorId], references: [id])
+  tags      ArticleTag[]
+  comments  Comment[]
+  @@map("article")
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Tag {
+  id       Int          @id @default(autoincrement())
+  name     String       @db.VarChar(50) @unique
+  articles ArticleTag[]
+  @@map("tag")
+}
+
+model ArticleTag {
+  articleId Int
+  tagId     Int
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([articleId, tagId])
+  @@map("article_tag")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.Text
+  articleId Int
+  userId    Int
+  createdAt DateTime @default(now()) @map("created_at")
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("comment")
+}
