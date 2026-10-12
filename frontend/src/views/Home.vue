@@ -25,8 +25,13 @@
     <main class="main">
       <!-- 灵感介绍 -->
       <div v-if="currentView === 'inspiration'" class="inspo-banner">
-        <h2>灵感</h2>
-        <p>随机发现一篇好文章。</p>
+        <div>
+          <h2>灵感</h2>
+          <p>从全部已发布文章中随机发现一篇。</p>
+        </div>
+        <el-button :loading="loading" @click="refreshInspiration">
+          换一篇
+        </el-button>
       </div>
 
       <!-- 我的 -->
@@ -73,8 +78,7 @@
               layout="prev, pager, next" @current-change="handlePageChange" />
           </div>
 
-          <el-empty v-if="!loading && articles.length === 0"
-            :description="currentView === 'inspiration' ? '暂无文章' : '暂无文章'" />
+          <el-empty v-if="!loading && articles.length === 0" description="暂无文章" />
         </template>
       </div>
     </main>
@@ -82,13 +86,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue"
+import { ref, onMounted, watch } from "vue"
+import { useRoute, useRouter } from "vue-router"
 import { getList } from "@/apis/article.js"
 import { getTags } from "@/apis/tag.js"
 import { useAuthStore } from "@/stores/auth.js"
 import { stripMarkdown, formatDateTime } from "@/utils/format.js"
 
 const authStore = useAuthStore()
+const route = useRoute()
+const router = useRouter()
 
 const currentView = ref("all")
 const categoryExpanded = ref(false)
@@ -99,11 +106,21 @@ const page = ref(1)
 const selectedTagId = ref(null)
 const loading = ref(true)
 const hasFetched = ref(false)
+let latestRequestId = 0
 
 onMounted(() => {
   fetchTags()
-  fetchArticles()
 })
+
+watch(
+  () => [route.query.view, route.query.tagId],
+  () => {
+    syncViewFromRoute()
+    page.value = 1
+    fetchArticles()
+  },
+  { immediate: true },
+)
 
 async function fetchTags() {
   try {
@@ -115,63 +132,101 @@ async function fetchTags() {
 }
 
 async function fetchArticles() {
+  const requestId = ++latestRequestId
   loading.value = true
+
+  if (currentView.value === "mine") {
+    articles.value = []
+    loading.value = false
+    hasFetched.value = true
+    return
+  }
+
   try {
     if (currentView.value === "inspiration") {
-      const res = await getList({ page: 1, limit: 50 })
-      const list = res.articles || []
-      // 随机打乱
-      for (let i = list.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1))
-          ;[list[i], list[j]] = [list[j], list[i]]
+      const firstPage = await getList({ page: 1, limit: 1 })
+      const total = Number(firstPage.pagination?.total) || 0
+
+      if (requestId !== latestRequestId) return
+      if (total === 0) {
+        articles.value = []
+        return
       }
-      articles.value = list
+
+      const randomPage = Math.floor(Math.random() * total) + 1
+      const res =
+        randomPage === 1
+          ? firstPage
+          : await getList({ page: randomPage, limit: 1 })
+
+      if (requestId !== latestRequestId) return
+      articles.value = (res.articles || []).slice(0, 1)
     } else {
       const params = { page: page.value, limit: 10 }
       if (selectedTagId.value) params.tagId = selectedTagId.value
       const res = await getList(params)
+
+      if (requestId !== latestRequestId) return
       articles.value = res.articles || []
       pagination.value = res.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 }
     }
   } catch {
-    // ignore
+    if (requestId === latestRequestId) {
+      articles.value = []
+    }
   } finally {
-    loading.value = false
-    hasFetched.value = true
+    if (requestId === latestRequestId) {
+      loading.value = false
+      hasFetched.value = true
+    }
   }
+}
+
+function syncViewFromRoute() {
+  const tagId = Number(route.query.tagId)
+  if (Number.isSafeInteger(tagId) && tagId > 0) {
+    currentView.value = "category"
+    categoryExpanded.value = true
+    selectedTagId.value = tagId
+    return
+  }
+
+  selectedTagId.value = null
+  const view = route.query.view
+  currentView.value = ["category", "inspiration", "mine"].includes(view)
+    ? view
+    : "all"
+  categoryExpanded.value = currentView.value === "category"
 }
 
 function switchView(view) {
   if (currentView.value === view) return
-  currentView.value = view
-  selectedTagId.value = null
-  if (view !== "category") {
-    categoryExpanded.value = false
-  }
-  page.value = 1
-  fetchArticles()
+  router.push({ name: "home", query: view === "all" ? {} : { view } })
 }
 
 function toggleCategory() {
-  categoryExpanded.value = !categoryExpanded.value
-  if (categoryExpanded.value && currentView.value !== "category") {
-    currentView.value = "category"
-    selectedTagId.value = null
-    page.value = 1
-    fetchArticles()
+  if (currentView.value === "category") {
+    categoryExpanded.value = !categoryExpanded.value
+    return
   }
+
+  router.push({ name: "home", query: { view: "category" } })
 }
 
 function selectTag(tagId) {
-  currentView.value = "category"
-  categoryExpanded.value = true
-  selectedTagId.value = selectedTagId.value === tagId ? null : tagId
-  page.value = 1
-  fetchArticles()
+  const nextTagId = selectedTagId.value === tagId ? null : tagId
+  router.push({
+    name: "home",
+    query: nextTagId ? { tagId: String(nextTagId) } : { view: "category" },
+  })
 }
 
 function handlePageChange(p) {
   page.value = p
+  fetchArticles()
+}
+
+function refreshInspiration() {
   fetchArticles()
 }
 </script>
@@ -241,6 +296,10 @@ function handlePageChange(p) {
   background: linear-gradient(135deg, #f5f7fa 0%, #ecf5ff 100%);
   border-radius: 8px;
   margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .inspo-banner h2 {

@@ -5,13 +5,30 @@ const prisma = require("../prismaClient");
 
 const router = express.Router();
 
+function normalizeText(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function exceedsCharacterLimit(value, maxLength) {
+  return Array.from(value).length > maxLength;
+}
+
 // POST /api/auth/register
 router.post("/register", async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const username = normalizeText(req.body?.username);
+    const email = normalizeText(req.body?.email);
+    const password =
+      typeof req.body?.password === "string" ? req.body.password : "";
 
     if (!username || !email || !password) {
       return res.status(400).json({ error: "请填写用户名、邮箱和密码" });
+    }
+    if (exceedsCharacterLimit(username, 50)) {
+      return res.status(400).json({ error: "用户名不能超过 50 个字符" });
+    }
+    if (exceedsCharacterLimit(email, 100)) {
+      return res.status(400).json({ error: "邮箱不能超过 100 个字符" });
     }
 
     // 邮箱格式校验
@@ -21,8 +38,11 @@ router.post("/register", async (req, res) => {
     }
 
     // 密码长度校验（bcrypt 最大 72 字节）
-    if (password.length < 6) {
+    if (Array.from(password).length < 6) {
       return res.status(400).json({ error: "密码长度不能少于6位" });
+    }
+    if (Buffer.byteLength(password, "utf8") > 72) {
+      return res.status(400).json({ error: "密码不能超过 72 字节" });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -67,22 +87,30 @@ router.post("/register", async (req, res) => {
 // POST /api/auth/login
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = normalizeText(req.body?.email);
+    const password =
+      typeof req.body?.password === "string" ? req.body.password : "";
 
     if (!email || !password) {
       return res.status(400).json({ error: "请提供邮箱和密码" });
+    }
+    if (exceedsCharacterLimit(email, 100)) {
+      return res.status(400).json({ error: "邮箱不能超过 100 个字符" });
+    }
+    if (Buffer.byteLength(password, "utf8") > 72) {
+      return res.status(400).json({ error: "密码不能超过 72 字节" });
     }
 
     // 查找用户
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return res.status(401).json({ error: "邮箱不存在" });
+      return res.status(401).json({ error: "邮箱或密码错误" });
     }
 
     // 验证密码
     const passwordValid = await bcrypt.compare(password, user.passwordHash);
     if (!passwordValid) {
-      return res.status(401).json({ error: "密码错误" });
+      return res.status(401).json({ error: "邮箱或密码错误" });
     }
 
     // 签发 JWT（有效期 7 天）
