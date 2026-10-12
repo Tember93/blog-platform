@@ -4,7 +4,10 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
-    "seed": "node seed.js"
+    "start": "node index.js",
+    "prisma:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "node seed.js"
   },
   "keywords": [],
   "author": "",
