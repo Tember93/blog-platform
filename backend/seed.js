@@ -1,3 +1,12 @@
+require("dotenv").config()
+
+if (process.env.ALLOW_DATABASE_RESET !== "true") {
+  console.error(
+    "已阻止种子数据重置：该操作会清空现有用户、文章、标签和评论。若确认使用本地演示数据库，请设置 ALLOW_DATABASE_RESET=true 后重试。",
+  )
+  process.exit(1)
+}
+
 const prisma = require("./prismaClient")
 const bcrypt = require("bcrypt")
 
