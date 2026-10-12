@@ -396,4 +396,60 @@ function refreshInspiration() {
 .loading {
   padding: 20px 0;
 }
+
+@media (max-width: 768px) {
+  .home-page {
+    padding: 16px 12px;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .sidebar {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .menu-list {
+    display: flex;
+    gap: 8px;
+    min-width: max-content;
+  }
+
+  .menu-list li,
+  .menu-list .sub-tag {
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+
+  .article-card {
+    padding: 16px;
+  }
+
+  .card-title {
+    font-size: 18px;
+  }
+
+  .pagination {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .inspo-banner {
+    padding: 16px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .inspo-banner .el-button {
+    align-self: stretch;
+  }
+}
 </style>

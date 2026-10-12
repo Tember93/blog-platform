@@ -69,6 +69,10 @@ function handleLogout() {
   gap: 12px;
 }
 
+.nav-links :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
 .user-avatar {
   background: #409eff;
   color: #fff;
@@ -81,5 +85,39 @@ function handleLogout() {
   color: #ddd;
   font-size: 16px;
   user-select: none;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    height: auto;
+    min-height: 60px;
+  }
+
+  .navbar-inner {
+    min-height: 60px;
+    padding: 10px 12px;
+    gap: 12px;
+  }
+
+  .nav-links {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo {
+    font-size: 20px;
+  }
+
+  .nav-links :deep(.el-button) {
+    padding: 8px 10px;
+  }
+
+  .sep,
+  .user-avatar {
+    display: none;
+  }
 }
 </style>

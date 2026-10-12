@@ -167,6 +167,7 @@ async function handleDelete() {
 .article-meta {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   color: #999;
   font-size: 14px;
@@ -184,6 +185,7 @@ async function handleDelete() {
 
 .article-tags {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 24px;
 }
@@ -192,6 +194,7 @@ async function handleDelete() {
   font-size: 16px;
   line-height: 1.9;
   color: #333;
+  overflow-wrap: anywhere;
 }
 
 .markdown-body :deep(h1),
@@ -236,6 +239,12 @@ async function handleDelete() {
   border-radius: 6px;
 }
 
+.markdown-body :deep(table) {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 .comments-section {
   margin-top: 48px;
   padding-top: 24px;
@@ -273,6 +282,7 @@ async function handleDelete() {
 
 .comment-body {
   flex: 1;
+  min-width: 0;
 }
 
 .comment-header {
@@ -298,5 +308,39 @@ async function handleDelete() {
   font-size: 14px;
   line-height: 1.6;
   margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+  .article-page {
+    padding: 20px 14px;
+  }
+
+  .article-title {
+    font-size: 26px;
+    line-height: 1.35;
+  }
+
+  .article-meta {
+    gap: 6px;
+  }
+
+  .article-meta :deep(.el-button + .el-button) {
+    margin-left: 0;
+  }
+
+  .comments-section {
+    margin-top: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+  .article-title {
+    font-size: 23px;
+  }
+
+  .comment-item {
+    gap: 10px;
+  }
 }
 </style>
