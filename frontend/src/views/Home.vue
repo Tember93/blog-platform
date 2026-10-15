@@ -74,6 +74,9 @@
 
           <!-- 分页：全部 / 分类 -->
           <div v-if="articles.length > 0 && currentView !== 'inspiration'" class="pagination">
+            <span class="pagination-summary">
+              共 {{ pagination.total }} 篇 · 第 {{ page }} / {{ pagination.totalPages }} 页
+            </span>
             <el-pagination :current-page="page" :page-size="pagination.limit" :total="pagination.total"
               layout="prev, pager, next" @current-change="handlePageChange" />
           </div>
@@ -389,8 +392,16 @@ function refreshInspiration() {
 
 .pagination {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   justify-content: center;
   margin-top: 24px;
+}
+
+.pagination-summary {
+  color: #909399;
+  font-size: 13px;
 }
 
 .loading {
@@ -435,7 +446,8 @@ function refreshInspiration() {
   }
 
   .pagination {
-    justify-content: flex-start;
+    align-items: flex-start;
+    width: 100%;
     overflow-x: auto;
     padding-bottom: 4px;
   }

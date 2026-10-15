@@ -190,5 +190,24 @@ npm run dev
 
 ## 项目截图
 
-本地全链路复验后，将在 `docs/images/` 中补充首页、文章详情、编辑器和移动端界面截图。
+### 桌面端首页
+
+![桌面端首页](docs/images/home-desktop.png)
+
+### 文章详情
+
+![文章详情](docs/images/article-detail-desktop.png)
+
+### 移动端首页
+
+![移动端首页](docs/images/home-mobile.png)
+
+## 本地复验结果
+
+- Prisma schema 校验通过，前端生产构建通过。
+- 首页能够读取已发布文章、标签总数和分页信息。
+- 文章详情能够展示 Markdown 正文、标签和评论。
+- 从文章详情点击标签后，首页能够读取 URL 中的 `tagId` 并完成筛选。
+- 灵感模式只展示一篇随机文章，并支持继续更换。
+- 桌面端和移动端响应式布局均已通过实际页面检查。
 
